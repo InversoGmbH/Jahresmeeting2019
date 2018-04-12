@@ -1,0 +1,4 @@
+rootProject.name = 'WorkshopJahresmeeting2019'
+
+include 'aufgaben'
+include 'ducksimulator'

@@ -1,0 +1,81 @@
+plugins {
+    id "com.github.spotbugs" version "1.7.1"
+    // dependencyUpdates Task zum prüfen auf neue Versionen
+    id 'com.github.ben-manes.versions' version '0.21.0'
+}
+
+group 'de.inverso.workshop'
+version '0.1'
+
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    // static analysis
+    apply plugin: 'jacoco'
+    // IDE support
+    apply plugin: 'eclipse'
+
+    sourceCompatibility = '11'
+    targetCompatibility = '11'
+    [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+    dependencies {
+        def versionSpotbugs = '3.1.12'
+        compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+        compileOnly "com.github.spotbugs:spotbugs-annotations:$versionSpotbugs"
+
+        def versionJUnit = '5.4.2'
+        testCompileOnly "com.github.spotbugs:spotbugs-annotations:$versionSpotbugs"
+        testCompile("org.junit.jupiter:junit-jupiter-api:$versionJUnit")
+        testRuntime("org.junit.jupiter:junit-jupiter-engine:$versionJUnit")
+        testCompile("org.assertj:assertj-core:3.12.2")
+        testCompile "org.mockito:mockito-core:2.27.0"
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+    
+    spotbugs {
+        toolVersion = '3.1.12'
+        effort = 'max'
+        reportLevel = 'low'
+        ignoreFailures = true
+    }
+
+    //findbugs { ignoreFailures = true }
+
+    // Findbugs in Eclipse immer ausführen
+    // Dieser Hack ist notwendig, damit Buildship Findbugs nicht entfernt
+    /*
+    afterEvaluate {
+        eclipse.project {
+            buildCommand 'edu.umd.cs.findbugs.plugin.eclipse.findbugsBuilder'
+            natures 'edu.umd.cs.findbugs.plugin.eclipse.findbugsNature'
+        }
+    }
+    */
+}
+
+wrapper {
+    gradleVersion = '5.4.1'
+}
+
+dependencyUpdates.resolutionStrategy {
+    componentSelection { rules ->
+        rules.all { ComponentSelection selection ->
+            boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm', 'preview', 'b', 'ea'].any { qualifier ->
+                selection.candidate.version ==~ /(?i).*[.-]$qualifier[.\d-+]*/
+            }
+            if (rejected) {
+                selection.reject('Release candidate')
+            }
+        }
+    }
+}
